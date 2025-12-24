@@ -582,32 +582,32 @@ bool ACustomCharacter::TrySafeMoveDelta(const FVector& Delta)
 	FHitResult Hit;
 	Move->SafeMoveUpdatedComponent(Delta, GetActorQuat(), true, Hit);
 
-	// Se non blocca, ok
+	// check if blocked
 	if (!Hit.IsValidBlockingHit())
 	{
 		return true;
 	}
 
-	// Se blocca, prova a "scivolare" lungo il piano del muro manualmente
+	// if blocked, tries to slide manualy
 	const float RemainingTime = 1.f - Hit.Time;
 	if (RemainingTime > KINDA_SMALL_NUMBER)
 	{
-		// rimuove la componente verso la normale dell'impatto
+
 		const FVector SlideDelta = FVector::VectorPlaneProject(Delta, Hit.Normal) * RemainingTime;
 
 		FHitResult Hit2;
 		Move->SafeMoveUpdatedComponent(SlideDelta, GetActorQuat(), true, Hit2);
 
-		// se anche il delta slidato blocca subito, allora è hard blocked
+		// check if also the slide delta its blocked instantly
 		if (Hit2.IsValidBlockingHit() && Hit2.Time < MoveStepBlockAbortTime)
 		{
 			return false;
 		}
 	}
 
-	// Consideriamo "hard blocked" solo se praticamente non si è mosso per niente
+	// Checking "Hard blocked" only exclusivly if it didnt move at all
 	const float MovedDist = (Move->UpdatedComponent->GetComponentLocation() - (Move->UpdatedComponent->GetComponentLocation() - Delta)).Size();
-	// (MovedDist qui è poco affidabile così com’è; meglio usare Hit.Time)
+	// MovedDist changed to Hit.Time(stronger check)
 	const bool bHardBlocked = (Hit.Time < MoveStepBlockAbortTime);
 
 	return !bHardBlocked;
@@ -624,13 +624,13 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 	const FVector Current = GetActorLocation();
 	FVector Delta = Desired - Current;
 
-	// 1) try normal move
+	// Try normal move
 	if (TrySafeMoveDelta(Delta))
 	{
 		return (Alpha >= 1.0f);
 	}
 
-	// 2) fallback: try moving slightly UP (useful for mantle edge collision)
+	// Fallback: try moving slightly UP (useful for mantle edge collision)
 	{
 		const FVector UpDelta = Delta + FVector(0, 0, MoveStepFallbackUp);
 		if (TrySafeMoveDelta(UpDelta))
@@ -639,7 +639,7 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		}
 	}
 
-	// 3) fallback: try a bit more FORWARD (useful to clear the lip)
+	// Fallback: try a bit more FORWARD (useful to clear the lip)
 	{
 		const FVector Fwd = GetActorForwardVector();
 		const FVector FwdDelta = Delta + Fwd * MoveStepFallbackForward;
@@ -649,13 +649,13 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		}
 	}
 
-	// 4) still blocked -> stop parkour (NO PERMA LOCK)
-	// 4) still blocked -> recovery (mantle)
+	// Still blocked -> stop parkour (NO PERMA LOCK)
+	// Still blocked -> recovery (mantle)
 	UE_LOG(LogTemp, Warning, TEXT("PARKOUR: blocked during move-step -> recovery"));
 
 	if (CurrentParkour == EParkourType::Mantle && !ParkourTarget.IsZero())
 	{
-		// prova a piazzarlo direttamente al target se ci sta
+		// Try to place it directly if the target fits
 		if (TryTeleportIfFits(ParkourTarget))
 		{
 			SetActorLocation(ParkourTarget, false, nullptr, ETeleportType::TeleportPhysics);
@@ -663,7 +663,7 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 			return true;
 		}
 
-		// fallback: prova leggermente più su
+		// Fallback: Checks slightly upper
 		FVector UpTarget = ParkourTarget + FVector(0, 0, 20.f);
 		if (TryTeleportIfFits(UpTarget))
 		{
@@ -672,15 +672,13 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 			return true;
 		}
 	}
-
-	// se non recuperi: termina ma NON restare lockato
 	EndParkour(true, true);
 	return true;
 }
 
 void ACustomCharacter::AdvanceParkourPhase()
 {
-	// passaggio da apex -> target
+	// Apex -> LandTarget
 	ParkourPhase = EParkourPhase::ToTarget;
 	PhaseElapsed = 0.f;
 
@@ -689,13 +687,12 @@ void ACustomCharacter::AdvanceParkourPhase()
 
 void ACustomCharacter::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
-	// se l’anim viene interrotta, NON deve soft-lockare: il movimento geometrico continua comunque.
-	// (non facciamo nulla qui)
+	// OLD MONTAGE VAULT LOGIC TO BE REMOVED
 }
 
 void ACustomCharacter::OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	// uguale: non usiamo l’anim come “verità”
+	// OLD MONTAGE VAULT LOGIC TO BE REMOVED
 }
 
 void ACustomCharacter::EndParkour(bool bInterrupted, bool bForce)
@@ -703,8 +700,8 @@ void ACustomCharacter::EndParkour(bool bInterrupted, bool bForce)
 	if (!bIsParkouring && !bForce) return;
 
 	GetWorldTimerManager().ClearTimer(ParkourFailsafeTimer);
-
-	// reset state
+	
+	// reset states
 	bIsParkouring = false;
 	bIsVaulting = false;
 	bIsMantling = false;

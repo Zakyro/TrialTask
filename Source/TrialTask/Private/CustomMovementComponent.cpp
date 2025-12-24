@@ -23,7 +23,7 @@ void UCustomMovementComponent::TickComponent(float DeltaTime, enum ELevelTick Ti
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// Keeps track of how recently sprint ended (used for slide grace window).
+	// Keeps track of how recently sprint ended (used for slide grace window)
 	if (!bIsSprinting)
 	{
 		TimeSinceSprintEnded += DeltaTime;
@@ -68,7 +68,7 @@ void UCustomMovementComponent::UpdateStamina(float DeltaTime)
 		Stamina = FMath::Min(StaminaMax, Stamina + StaminaRegenPerSec * DeltaTime);
 	}
 
-	// Stops sprint if stamina hits zero.
+	// Stops sprint if stamina hits zero
 	if (bIsSprinting && Stamina < KINDA_SMALL_NUMBER)
 	{
 		bIsSprinting = false;
@@ -114,7 +114,7 @@ bool UCustomMovementComponent::CanStartSlide() const
 
 	const float Speed = GetHorizontalSpeed();
 
-	// Either enough speed OR within sprint grace window.
+	// Either enough speed OR within sprint grace window
 	const bool bHasSpeed = Speed >= SlideMinStartSpeed;
 	const bool bInGrace = (TimeSinceSprintEnded <= PostSprintSlideGraceTime) && (Speed >= (SlideMinStartSpeed * 0.85f));
 
@@ -137,7 +137,7 @@ void UCustomMovementComponent::EnterSlide()
 {
 	bIsSliding = true;
 
-	// Saves current walking params, then makes slide feel slippery.
+	// Saves current walking params, then makes slide feel slippery
 	DefaultGroundFriction = GroundFriction;
 	DefaultBrakingDecel = BrakingDecelerationWalking;
 
@@ -151,7 +151,7 @@ void UCustomMovementComponent::ExitSlide()
 {
 	bIsSliding = false;
 
-	// Restores walking params.
+	// Restores walking params
 	GroundFriction = DefaultGroundFriction;
 	BrakingDecelerationWalking = DefaultBrakingDecel;
 
@@ -185,12 +185,12 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 		return;
 	}
 
-	// Updates floor info.
+	// Updates floor info
 	FindFloor(UpdatedComponent->GetComponentLocation(), CurrentFloor, false);
 
 	if (!CurrentFloor.IsWalkableFloor())
 	{
-		// If ground is lost, ends slide and falls.
+		// If ground is lost, ends slide and falls
 		ExitSlide();
 		SetMovementMode(MOVE_Falling);
 		return;
@@ -199,19 +199,19 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 	const FVector FloorNormal = CurrentFloor.HitResult.ImpactNormal.GetSafeNormal();
 	const FVector Up = FVector::UpVector;
 
-	// Computes slope angle (0 = flat, 90 = vertical wall).
+	// Computes slope angle (0 = flat, 90 = vertical wall)
 	const float CosSlope = FVector::DotProduct(FloorNormal, Up);
 	const float SlopeRad = FMath::Acos(FMath::Clamp(CosSlope, -1.f, 1.f));
 	const float SlopeAngleDeg = FMath::RadiansToDegrees(SlopeRad);
 
 	const bool bIsOnSlope = (SlopeAngleDeg >= SlideSlopeAngleMinDeg);
 
-	// Downhill direction = gravity projected onto the floor plane.
+	// Downhill direction = gravity projected onto the floor plane
 	const FVector GravityDir = FVector(0.f, 0.f, -1.f);
 	FVector Downhill = GravityDir - FVector::DotProduct(GravityDir, FloorNormal) * FloorNormal;
 	Downhill = Downhill.GetSafeNormal();
 
-	// Keeps velocity on the floor plane to avoid tiny Z jitter.
+	// Keeps velocity on the floor plane to avoid tiny Z plane jitter
 	Velocity = FVector::VectorPlaneProject(Velocity, FloorNormal);
 
 	const float Speed = Velocity.Size();
@@ -222,30 +222,30 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 	}
 
 	const FVector VelDir = Velocity.GetSafeNormal();
-	const float AlongDownhill = FVector::DotProduct(VelDir, Downhill); // >0 = going downhill, <0 = going uphill
+	const float AlongDownhill = FVector::DotProduct(VelDir, Downhill); 
 
-	// Steering input: uses the movement input vector, projected on the floor.
+	// Steering input: uses the movement input vector, projected on the floor
 	FVector Input = ConsumeInputVector();
 	Input = FVector::VectorPlaneProject(Input, FloorNormal);
 	const FVector InputDir = Input.GetSafeNormal();
 
 	FVector Accel = FVector::ZeroVector;
 
-	// Steering always works (arcade feel).
-	if (!InputDir.IsNearlyZero())
+	// Steering always works (arcade feel)
+	if (!InputDir.IsNearlyZero()
 	{
 		Accel += InputDir * SlideSteerAccel;
 	}
 
 	if (bIsOnSlope && !Downhill.IsNearlyZero())
 	{
-		// Uses slope strength (0..1) so small slopes accelerate less.
+		// Uses slope strength so small slopes accelerate less
 		const float SlopeStrength = FMath::Clamp(FMath::Sin(SlopeRad), 0.f, 1.f);
 
-		// Always pulls toward downhill on a slope (fixes "always flat" issue).
+		// Always pulls toward downhill on a slope (fixes "always flat" issue)
 		Accel += Downhill * (SlideDownhillAccel * SlopeStrength);
 
-		// If moving against downhill, adds extra braking (uphill feels heavy).
+		// If moving against downhill, adds extra braking (uphill feels heavy)
 		if (AlongDownhill < -0.05f)
 		{
 			Accel += (-VelDir) * SlideUphillDecel;
@@ -253,15 +253,15 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 	}
 	else
 	{
-		// Flat: loses momentum over time.
+		// Flat surface (loses momentum over time)
 		Accel += (-VelDir) * SlideFlatDecel;
 	}
 
-	// Integrates velocity.
+	// Integrates velocity
 	Velocity += Accel * DeltaTime;
 	Velocity = FVector::VectorPlaneProject(Velocity, FloorNormal);
 
-	// Caps speed depending on slope/flat.
+	// Caps speed depending on slope/flat
 	const float MaxSpeed = bIsOnSlope ? SlideMaxSpeedDownhill : SlideMaxSpeedFlat;
 	const float NewSpeed = Velocity.Size();
 	if (NewSpeed > MaxSpeed)
@@ -275,7 +275,7 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 		return;
 	}
 
-	// Moves capsule.
+	// Moves capsule
 	const FVector Delta = Velocity * DeltaTime;
 
 	FHitResult Hit;
@@ -283,10 +283,10 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 
 	if (Hit.IsValidBlockingHit())
 	{
-		// Slides along blocking surface.
+		// Slides along blocking surface
 		SlideAlongSurface(Delta, 1.f - Hit.Time, Hit.Normal, Hit, true);
 
-		// Keeps velocity on the new surface plane.
+		// Keeps velocity on the new surface plane
 		Velocity = FVector::VectorPlaneProject(Velocity, Hit.Normal);
 	}
 }

@@ -73,7 +73,7 @@ public:
 	TObjectPtr<UStaminaWidget> StaminaWidget;
 
 	// --------------------
-	// Montages (solo estetica)
+	// Montages  ( No Logic )
 	// --------------------
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour")
 	TObjectPtr<UAnimMontage> VaultMontage;
@@ -82,7 +82,7 @@ public:
 	TObjectPtr<UAnimMontage> MantleMontage;
 
 	// --------------------
-	// Parkour tuning (detection)
+	// Parkour tuning ( Trace Detections )
 	// --------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour|Tuning")
 	float ParkourFrontCheckDistance = 120.0f;
@@ -113,7 +113,7 @@ public:
 	float ParkourLandingCapsuleInflate = 4.f;
 
 	// --------------------
-	// Parkour movement (geometrico)
+	// Parkour movement ( Logic )
 	// --------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour|Move")
 	float VaultToApexDuration = 0.18f;
@@ -175,9 +175,6 @@ protected:
 	EParkourType DecideParkourType(float ObstacleHeight) const;
 	bool ComputeSafeParkourLanding(const FHitResult& FrontHit, const FVector& TopPoint, FVector& OutSafeLocation) const;
 
-	// Movement points
-	bool ComputeParkourApex(const FVector& TopPoint, FVector& OutApex) const;
-
 	// Run
 	bool StartParkour(EParkourType Type, const FVector& TargetLocation, const FVector& TopPoint);
 	void EndParkour(bool bInterrupted, bool bForce = false);
@@ -195,7 +192,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCustomMovementComponent> CustomMoveComp;
 
-	// state
+	// states
 	UPROPERTY(Transient)
 	bool bIsParkouring = false;
 
@@ -236,12 +233,12 @@ private:
 	// save/restore gravity
 	float SavedGravityScale = 1.0f;
 
-	// vault: apex is just a transition (no fit test)
+	// apex transition
 	bool bVaultApexNoFit = true;
 
-	// mantle: move-step fallback tuning
+	// Fallbacks tuning ( MANTLE )
 	UPROPERTY(EditAnywhere, Category = "Parkour|Move")
-	float MoveStepBlockAbortTime = 0.03f; // era 0.05, rendiamo più permissivo
+	float MoveStepBlockAbortTime = 0.03f; 
 
 	UPROPERTY(EditAnywhere, Category = "Parkour|Move")
 	float MoveStepFallbackUp = 18.f;
@@ -250,7 +247,7 @@ private:
 	float MoveStepFallbackForward = 18.f;
 
 
-	// failsafe
+	// Failsafe
 	FTimerHandle ParkourFailsafeTimer;
 
 	void SetInputLocked(bool bLocked);

@@ -82,7 +82,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Slide")
 	float SlideMinSpeedToKeep = 120.0f;
 
-	// Decel on flat (uu/s^2)
+	// Decel on flat
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Slide")
 	float SlideFlatDecel = 650.0f;
 
@@ -100,11 +100,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slide|Tuning")
 	float SlideUphillDecel = 1100.0f;
 
-	// Base downhill acceleration (uu/s^2)
+	// Base downhill acceleration
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slide|Tuning")
 	float SlideDownhillAccel = 900.0f;
 
-	// Steering acceleration (uu/s^2)
+	// Steering acceleration
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slide|Tuning")
 	float SlideSteerAccel = 2600.0f;
 
@@ -112,7 +112,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slide|Tuning")
 	float SlideSlopeAngleMinDeg = 4.0f;
 
-	// Grace window after sprint: can press only CTRL to slide
+	// Grace window after sprint
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Slide")
 	float PostSprintSlideGraceTime = 0.25f;
 
@@ -129,7 +129,7 @@ public:
 	void StopSlide();
 
 	// --------------------
-	// Crouch helper (state only)
+	// Crouch helper (states only)
 	// --------------------
 	UFUNCTION(BlueprintCallable, Category = "Movement|Crouch")
 	void SetCrouchRequested(bool bRequested) { bCrouchRequested = bRequested; }
