@@ -54,7 +54,6 @@ void UTrialAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	const float Walk = FMath::Max(CachedMoveComp->GetWalkSpeed(), 1.0f);
 	const float Sprint = FMath::Max(CachedMoveComp->GetSprintSpeed(), Walk + 1.0f);
 
-	// 0..Walk -> 0..1, Walk..Sprint -> 1..2
 	if (HorizontalSpeed <= Walk)
 	{
 		Speed = HorizontalSpeed / Walk;

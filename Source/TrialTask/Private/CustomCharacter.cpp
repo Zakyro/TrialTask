@@ -89,7 +89,7 @@ void ACustomCharacter::Tick(float DeltaSeconds)
 		return;
 	}
 
-	// Phase movement (geometrico)
+	// Phase movement
 	if (ParkourPhase == EParkourPhase::ToApex)
 	{
 		if (ParkourMoveStep(DeltaSeconds, ParkourStart, ParkourApex, PhaseDuration))
@@ -430,7 +430,7 @@ bool ACustomCharacter::ComputeParkourApex_Vault(const FVector& TopPoint, FVector
 	const float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
 	const FVector Forward = GetActorForwardVector();
 
-	// Apex come transizione: sopra il top, poco avanti. Non facciamo fit test.
+	// Apex as transtion, on top of the block
 	FVector Apex = TopPoint + Forward * (CapsuleRadius + ApexForwardExtra);
 	Apex.Z = TopPoint.Z + CapsuleHalfHeight + ApexUpExtra;
 
@@ -471,7 +471,6 @@ bool ACustomCharacter::ComputeParkourApex_Mantle(const FVector& TopPoint, FVecto
 		return true;
 	}
 
-	// fallback: alza un po'
 	Apex.Z += 20.f;
 
 	const bool bBlocked2 = World->SweepSingleByChannel(
@@ -508,7 +507,6 @@ bool ACustomCharacter::StartParkour(EParkourType Type, const FVector& TargetLoca
 		bIsMantling = true;
 	}
 
-	// NOTE: se non hai montage buoni, puoi anche lasciarlo NULL: il move geometrico funziona lo stesso
 	CurrentParkourMontage = MontageToPlay;
 
 	// Points
@@ -545,7 +543,7 @@ bool ACustomCharacter::StartParkour(EParkourType Type, const FVector& TargetLoca
 
 	SetInputLocked(true);
 
-	// Play montage (solo estetica)
+	// Play montage
 	if (AnimInstance && MontageToPlay)
 	{
 		FOnMontageBlendingOutStarted BlendOutDel;
@@ -559,7 +557,7 @@ bool ACustomCharacter::StartParkour(EParkourType Type, const FVector& TargetLoca
 		AnimInstance->Montage_Play(MontageToPlay, 1.0f);
 	}
 
-	// failsafe: sempre unlock
+	// failsafe: always unlock
 	const float Total = ((Type == EParkourType::Vault) ? (VaultToApexDuration + VaultToTargetDuration) : (MantleToApexDuration + MantleToTargetDuration));
 	const float FailSafeDelay = FMath::Max(0.15f, Total + ParkourFailSafeExtraTime);
 
@@ -582,32 +580,27 @@ bool ACustomCharacter::TrySafeMoveDelta(const FVector& Delta)
 	FHitResult Hit;
 	Move->SafeMoveUpdatedComponent(Delta, GetActorQuat(), true, Hit);
 
-	// Se non blocca, ok
 	if (!Hit.IsValidBlockingHit())
 	{
 		return true;
 	}
 
-	// Se blocca, prova a "scivolare" lungo il piano del muro manualmente
 	const float RemainingTime = 1.f - Hit.Time;
 	if (RemainingTime > KINDA_SMALL_NUMBER)
 	{
-		// rimuove la componente verso la normale dell'impatto
 		const FVector SlideDelta = FVector::VectorPlaneProject(Delta, Hit.Normal) * RemainingTime;
 
 		FHitResult Hit2;
 		Move->SafeMoveUpdatedComponent(SlideDelta, GetActorQuat(), true, Hit2);
 
-		// se anche il delta slidato blocca subito, allora è hard blocked
 		if (Hit2.IsValidBlockingHit() && Hit2.Time < MoveStepBlockAbortTime)
 		{
 			return false;
 		}
 	}
 
-	// Consideriamo "hard blocked" solo se praticamente non si è mosso per niente
 	const float MovedDist = (Move->UpdatedComponent->GetComponentLocation() - (Move->UpdatedComponent->GetComponentLocation() - Delta)).Size();
-	// (MovedDist qui è poco affidabile così com’è; meglio usare Hit.Time)
+
 	const bool bHardBlocked = (Hit.Time < MoveStepBlockAbortTime);
 
 	return !bHardBlocked;
@@ -630,7 +623,7 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		return (Alpha >= 1.0f);
 	}
 
-	// 2) fallback: try moving slightly UP (useful for mantle edge collision)
+	// 2) fallback: try moving slightly UP
 	{
 		const FVector UpDelta = Delta + FVector(0, 0, MoveStepFallbackUp);
 		if (TrySafeMoveDelta(UpDelta))
@@ -639,7 +632,7 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		}
 	}
 
-	// 3) fallback: try a bit more FORWARD (useful to clear the lip)
+	// 3) fallback: try a bit more FORWARD
 	{
 		const FVector Fwd = GetActorForwardVector();
 		const FVector FwdDelta = Delta + Fwd * MoveStepFallbackForward;
@@ -649,13 +642,13 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		}
 	}
 
-	// 4) still blocked -> stop parkour (NO PERMA LOCK)
-	// 4) still blocked -> recovery (mantle)
+	// 4) still blocked -> stop parkour
+	// 4) still blocked -> recovery
 	UE_LOG(LogTemp, Warning, TEXT("PARKOUR: blocked during move-step -> recovery"));
 
 	if (CurrentParkour == EParkourType::Mantle && !ParkourTarget.IsZero())
 	{
-		// prova a piazzarlo direttamente al target se ci sta
+		// tries to palce it on target if it fits
 		if (TryTeleportIfFits(ParkourTarget))
 		{
 			SetActorLocation(ParkourTarget, false, nullptr, ETeleportType::TeleportPhysics);
@@ -663,7 +656,7 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 			return true;
 		}
 
-		// fallback: prova leggermente più su
+		// fallback: tries higher
 		FVector UpTarget = ParkourTarget + FVector(0, 0, 20.f);
 		if (TryTeleportIfFits(UpTarget))
 		{
@@ -673,14 +666,13 @@ bool ACustomCharacter::ParkourMoveStep(float DeltaSeconds, const FVector& From, 
 		}
 	}
 
-	// se non recuperi: termina ma NON restare lockato
 	EndParkour(true, true);
 	return true;
 }
 
 void ACustomCharacter::AdvanceParkourPhase()
 {
-	// passaggio da apex -> target
+	// apex -> target
 	ParkourPhase = EParkourPhase::ToTarget;
 	PhaseElapsed = 0.f;
 
@@ -689,13 +681,12 @@ void ACustomCharacter::AdvanceParkourPhase()
 
 void ACustomCharacter::OnParkourMontageBlendOut(UAnimMontage* Montage, bool bInterrupted)
 {
-	// se l’anim viene interrotta, NON deve soft-lockare: il movimento geometrico continua comunque.
-	// (non facciamo nulla qui)
+	// LEGACY CONTENT
 }
 
 void ACustomCharacter::OnParkourMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	// uguale: non usiamo l’anim come “verità”
+	// LEGACY CONTENT
 }
 
 void ACustomCharacter::EndParkour(bool bInterrupted, bool bForce)
@@ -704,7 +695,7 @@ void ACustomCharacter::EndParkour(bool bInterrupted, bool bForce)
 
 	GetWorldTimerManager().ClearTimer(ParkourFailsafeTimer);
 
-	// reset state
+	// reset states
 	bIsParkouring = false;
 	bIsVaulting = false;
 	bIsMantling = false;

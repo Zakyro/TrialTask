@@ -22,11 +22,11 @@ protected:
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
 protected:
-    // Bound from the widget designer (same name).
+    // Bound from the widget designer
     UPROPERTY(meta = (BindWidget))
     TObjectPtr<UProgressBar> PB_Stamina;
 
-    // Runtime reference, not saved.
+    // Runtime reference, not saved
     UPROPERTY(Transient)
     TObjectPtr<UCustomMovementComponent> MoveComp;
 };

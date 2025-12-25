@@ -61,7 +61,7 @@ public:
 	TObjectPtr<UInputAction> IA_Crouch;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> IA_Parkour; // V
+	TObjectPtr<UInputAction> IA_Parkour; 
 
 	// --------------------
 	// UI (Stamina)
@@ -113,7 +113,7 @@ public:
 	float ParkourLandingCapsuleInflate = 4.f;
 
 	// --------------------
-	// Parkour movement (geometrico)
+	// Parkour movement
 	// --------------------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Parkour|Move")
 	float VaultToApexDuration = 0.18f;
@@ -195,7 +195,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UCustomMovementComponent> CustomMoveComp;
 
-	// state
+	// states
 	UPROPERTY(Transient)
 	bool bIsParkouring = false;
 
@@ -214,7 +214,7 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UAnimMontage> CurrentParkourMontage = nullptr;
 
-	// geometric move
+	// move
 	UPROPERTY(Transient)
 	EParkourPhase ParkourPhase = EParkourPhase::None;
 
@@ -241,7 +241,7 @@ private:
 
 	// mantle: move-step fallback tuning
 	UPROPERTY(EditAnywhere, Category = "Parkour|Move")
-	float MoveStepBlockAbortTime = 0.03f; // era 0.05, rendiamo più permissivo
+	float MoveStepBlockAbortTime = 0.03f;
 
 	UPROPERTY(EditAnywhere, Category = "Parkour|Move")
 	float MoveStepFallbackUp = 18.f;

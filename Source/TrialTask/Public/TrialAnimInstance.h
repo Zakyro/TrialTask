@@ -23,7 +23,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim|State")
 	bool bIsInAir = false;
 
-	// legacy vars for your AnimBP
+	// legacy vars
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Anim|Legacy")
 	bool bIsSliding = false;
 

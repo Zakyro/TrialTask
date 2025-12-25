@@ -14,7 +14,7 @@ void UStaminaWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
 
-    // Keep the bar in a valid state even before a movement component is assigned.
+    // Keep the bar in a valid state even before a movement component is assigned
     if (PB_Stamina)
     {
         PB_Stamina->SetPercent(1.0f);

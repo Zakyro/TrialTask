@@ -231,7 +231,7 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 
 	FVector Accel = FVector::ZeroVector;
 
-	// Steering always works (arcade feel).
+	// Steering always works
 	if (!InputDir.IsNearlyZero())
 	{
 		Accel += InputDir * SlideSteerAccel;
@@ -239,13 +239,10 @@ void UCustomMovementComponent::PhysSlide(float DeltaTime, int32 Iterations)
 
 	if (bIsOnSlope && !Downhill.IsNearlyZero())
 	{
-		// Uses slope strength (0..1) so small slopes accelerate less.
 		const float SlopeStrength = FMath::Clamp(FMath::Sin(SlopeRad), 0.f, 1.f);
 
-		// Always pulls toward downhill on a slope (fixes "always flat" issue).
 		Accel += Downhill * (SlideDownhillAccel * SlopeStrength);
 
-		// If moving against downhill, adds extra braking (uphill feels heavy).
 		if (AlongDownhill < -0.05f)
 		{
 			Accel += (-VelDir) * SlideUphillDecel;
